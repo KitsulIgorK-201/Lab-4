@@ -1,0 +1,222 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+class ScheduleRecord
+{
+    public int PairNumber { get; set; }
+    public string DayOfWeek { get; set; }
+    public string Subject { get; set; }
+    public string TeacherLastName { get; set; }
+    public string FormOfClass { get; set; }
+
+    public ScheduleRecord() { }
+
+    public ScheduleRecord(int pairNumber, string dayOfWeek, string subject, string teacherLastName, string formOfClass)
+    {
+        PairNumber = pairNumber;
+        DayOfWeek = dayOfWeek;
+        Subject = subject;
+        TeacherLastName = teacherLastName;
+        FormOfClass = formOfClass;
+    }
+
+    public override string ToString()
+    {
+        return $"{PairNumber},{DayOfWeek},{Subject},{TeacherLastName},{FormOfClass}";
+    }
+
+    public static ScheduleRecord FromString(string data)
+    {
+        var fields = data.Split(',');
+        return new ScheduleRecord(
+            int.Parse(fields[0]),
+            fields[1],
+            fields[2],
+            fields[3],
+            fields[4]
+        );
+    }
+}
+
+class Program
+{
+    const string FilePath = "schedule.txt";
+
+    static void Main()
+    {
+        List<ScheduleRecord> records = LoadRecords();
+
+        while (true)
+        {
+            Console.WriteLine("\nМеню:");
+            Console.WriteLine("a - Додати запис");
+            Console.WriteLine("e - Редагувати запис");
+            Console.WriteLine("d - Видалити запис");
+            Console.WriteLine("v - Переглянути всi записи");
+            Console.WriteLine("s - Пошук");
+            Console.WriteLine("o - Сортувати");
+            Console.WriteLine("Enter - Вихiд");
+
+            var choice = Console.ReadKey().Key;
+            Console.WriteLine();
+
+            switch (choice)
+            {
+                case ConsoleKey.A: AddRecord(records); break;
+                case ConsoleKey.E: EditRecord(records); break;
+                case ConsoleKey.D: DeleteRecord(records); break;
+                case ConsoleKey.V: DisplayRecords(records); break;
+                case ConsoleKey.S: SearchRecords(records); break;
+                case ConsoleKey.O: SortRecords(records); break;
+                case ConsoleKey.Enter: SaveRecords(records); return;
+            }
+        }
+    }
+
+    static List<ScheduleRecord> LoadRecords()
+    {
+        var records = new List<ScheduleRecord>();
+
+        if (File.Exists(FilePath))
+        {
+            var lines = File.ReadAllLines(FilePath);
+            foreach (var line in lines)
+            {
+                try
+                {
+                    records.Add(ScheduleRecord.FromString(line));
+                }
+                catch
+                {
+                    Console.WriteLine($"Некоректний запис: {line}");
+                }
+            }
+        }
+
+        return records;
+    }
+
+    static void SaveRecords(List<ScheduleRecord> records)
+    {
+        File.WriteAllLines(FilePath, records.Select(r => r.ToString()));
+    }
+
+    static void AddRecord(List<ScheduleRecord> records)
+    {
+        try
+        {
+            Console.Write("Номер пари: ");
+            int pairNumber = int.Parse(Console.ReadLine());
+
+            Console.Write("День тижня: ");
+            string dayOfWeek = Console.ReadLine();
+
+            Console.Write("Предмет: ");
+            string subject = Console.ReadLine();
+
+            Console.Write("Прізвище викладача: ");
+            string teacherLastName = Console.ReadLine();
+
+            Console.Write("Форма заняття: ");
+            string formOfClass = Console.ReadLine();
+
+            records.Add(new ScheduleRecord(pairNumber, dayOfWeek, subject, teacherLastName, formOfClass));
+            Console.WriteLine("Запис додано.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Помилка: {ex.Message}");
+        }
+    }
+
+    static void EditRecord(List<ScheduleRecord> records)
+    {
+        Console.Write("Введіть номер пари для редагування: ");
+        int pairNumber = int.Parse(Console.ReadLine());
+
+        var record = records.FirstOrDefault(r => r.PairNumber == pairNumber);
+        if (record == null)
+        {
+            Console.WriteLine("Запис не знайдено.");
+            return;
+        }
+
+        Console.Write("Новий день тижня: ");
+        record.DayOfWeek = Console.ReadLine();
+
+        Console.Write("Новий предмет: ");
+        record.Subject = Console.ReadLine();
+
+        Console.Write("Нове прізвище викладача: ");
+        record.TeacherLastName = Console.ReadLine();
+
+        Console.Write("Нова форма заняття: ");
+        record.FormOfClass = Console.ReadLine();
+
+        Console.WriteLine("Запис оновлено.");
+    }
+
+    static void DeleteRecord(List<ScheduleRecord> records)
+    {
+        Console.Write("Введіть номер пари для видалення: ");
+        int pairNumber = int.Parse(Console.ReadLine());
+
+        var record = records.FirstOrDefault(r => r.PairNumber == pairNumber);
+        if (record != null)
+        {
+            records.Remove(record);
+            Console.WriteLine("Запис видалено.");
+        }
+        else
+        {
+            Console.WriteLine("Запис не знайдено.");
+        }
+    }
+
+    static void DisplayRecords(List<ScheduleRecord> records)
+    {
+        Console.WriteLine("\nРозклад:");
+        foreach (var record in records)
+        {
+            Console.WriteLine($"{record.PairNumber}: {record.DayOfWeek} - {record.Subject} - {record.TeacherLastName} - {record.FormOfClass}");
+        }
+    }
+
+    static void SearchRecords(List<ScheduleRecord> records)
+    {
+        Console.Write("Введіть прізвище викладача для пошуку: ");
+        string teacherLastName = Console.ReadLine();
+
+        var results = records.Where(r => r.TeacherLastName.Equals(teacherLastName, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (results.Count > 0)
+        {
+            Console.WriteLine("\nЗнайдено записи:");
+            foreach (var record in results)
+            {
+                Console.WriteLine($"{record.PairNumber}: {record.DayOfWeek} - {record.Subject} - {record.TeacherLastName} - {record.FormOfClass}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Записів не знайдено.");
+        }
+    }
+
+    static void SortRecords(List<ScheduleRecord> records)
+    {
+        Console.WriteLine("Сортувати за:");
+        Console.WriteLine("1 - Номер пари");
+        Console.WriteLine("2 - День тижня");
+        int choice = int.Parse(Console.ReadLine());
+
+        if (choice == 1)
+            records = records.OrderBy(r => r.PairNumber).ToList();
+        else if (choice == 2)
+            records = records.OrderBy(r => r.DayOfWeek).ToList();
+
+        Console.WriteLine("Сортування виконано.");
+    }
+}
