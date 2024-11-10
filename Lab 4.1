@@ -1,0 +1,115 @@
+using System.Collections.Generic;
+using System.Linq;
+
+class Student
+{
+    public string LastName { get; set; }
+    public int RecordBookNumber { get; set; }
+    public int Rating { get; set; }
+
+    public Student(string lastName, int recordBookNumber, int rating)
+    {
+        if (string.IsNullOrWhiteSpace(lastName))
+            throw new ArgumentException("Прiзвище не може бути порожнiм.");
+
+        if (recordBookNumber <= 0)
+            throw new ArgumentException("Номер залiкової книжки має бути додатним числом.");
+
+        if (rating < 0 || rating > 100)
+            throw new ArgumentOutOfRangeException(nameof(rating), "Рейтинг має бути в дiапазоні вiд 0 до 100.");
+
+        LastName = lastName;
+        RecordBookNumber = recordBookNumber;
+        Rating = rating;
+    }
+
+    public override string ToString()
+    {
+        return $"{LastName,-15} {RecordBookNumber,-10} {Rating,-5}";
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        List<Student> students = new List<Student>
+        {
+            new Student("Іваненко", 101, 85),
+            new Student("Петренко", 102, 73),
+            new Student("Сидоренко", 103, 91),
+            new Student("Коваленко", 104, 66),
+            new Student("Грищенко", 105, 78),
+            new Student("Бондаренко", 106, 52),
+            new Student("Мартиненко", 107, 88),
+            new Student("Лисенко", 108, 95),
+            new Student("Ткаченко", 109, 69)
+        };
+
+        Console.WriteLine("\nВведiть iнформацiю про 10-го студента:");
+
+        string lastName;
+        int recordBookNumber;
+        int rating;
+
+        // Введення прізвища студента
+        while (true)
+        {
+            Console.Write("Прiзвище: ");
+            lastName = Console.ReadLine();
+
+            if (!string.IsNullOrWhiteSpace(lastName))
+                break;
+
+            Console.WriteLine("Помилка: Прiзвище не може бути порожнiм. Спробуйте ще раз.");
+        }
+
+        // Введення номера залікової книжки
+        while (true)
+        {
+            Console.Write("№ залiкової книжки: ");
+            if (int.TryParse(Console.ReadLine(), out recordBookNumber) && recordBookNumber > 0)
+                break;
+
+            Console.WriteLine("Помилка: Номер залікової книжки має бути додатним числом. Спробуйте ще раз.");
+        }
+
+        // Введення рейтингу студента
+        while (true)
+        {
+            Console.Write("Рейтинг (0-100): ");
+            if (int.TryParse(Console.ReadLine(), out rating) && rating >= 0 && rating <= 100)
+                break;
+
+            Console.WriteLine("Помилка: Рейтинг має бути в дiапазонi вiд 0 до 100. Спробуйте ще раз.");
+        }
+
+        try
+        {
+            students.Add(new Student(lastName, recordBookNumber, rating));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Сталася помилка під час додавання студента: {ex.Message}");
+        }
+
+        // Сортування за рейтингом по спаданню
+        students = students.OrderByDescending(s => s.Rating).ToList();
+
+        // Виведення списку студентів у вигляді таблиці
+        Console.WriteLine($"\n{"Прiзвище",-15} {"№ залiкової",-10} {"Рейтинг",-5}");
+        Console.WriteLine(new string('-', 35));
+        foreach (var student in students)
+        {
+            Console.WriteLine(student);
+        }
+
+        // Обчислення середнього рейтингу
+        double averageRating = students.Average(s => s.Rating);
+        Console.WriteLine($"\nСередній рейтинг групи: {averageRating:F2}");
+
+        // Визначення кількості студентів з рейтингом нижче середнього
+        int belowAverageCount = students.Count(s => s.Rating < averageRating);
+        Console.WriteLine($"Кількість студентів з рейтингом нижче середнього: {belowAverageCount}");
+    }
+}
